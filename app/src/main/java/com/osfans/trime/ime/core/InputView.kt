@@ -64,6 +64,7 @@ import splitties.views.dsl.core.matchParent
 import splitties.views.dsl.core.view
 import splitties.views.dsl.core.wrapContent
 import splitties.views.imageDrawable
+import timber.log.Timber
 
 /**
  * Successor of the old InputRoot
@@ -179,6 +180,9 @@ class InputView(
         // MUST call before any operation
         val receivers: List<InputBroadcastReceiver> by allInstances()
         receivers.forEach { broadcaster.addReceiver(it) }
+        Timber.i("InputView receivers: %s", receivers.map { it.javaClass.simpleName })
+        // 显式注册输入栏（拼音条依赖候选广播；allInstances 可能漏掉它）
+        broadcaster.addReceiver(inputBar)
 
         windowManager.cacheResidentWindow(keyboardWindow, createView = true)
         windowManager.cacheResidentWindow(liquidWindow)

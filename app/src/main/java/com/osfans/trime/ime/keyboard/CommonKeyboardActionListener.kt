@@ -194,6 +194,7 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
                     "select_candidate" -> handleSelectCandidate(arg)
                     "switch_hide_key_symbol" -> switchHideKeySymbol()
                     "switch_hide_key_hint" -> switchHideKeyHint()
+                    "select_schema" -> handleSelectSchema(arg)
                     else -> handleIntentAction(action.command, arg)
                 }
             }
@@ -298,6 +299,12 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
                         api.selectCandidate(index, false)
                     }
                 }
+            }
+
+            /** 直接切换到指定方案（空参数则不做）。 */
+            private fun handleSelectSchema(schemaId: String) {
+                if (schemaId.isEmpty()) return
+                rime.launchOnReady { it.selectSchema(schemaId) }
             }
 
             private fun switchHideKeySymbol() {

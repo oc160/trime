@@ -68,9 +68,9 @@ android {
             resValue("string", "trime_app_name", "@string/app_name_release")
         }
         debug {
-            applicationIdSuffix = ".debug"
-
-            resValue("string", "trime_app_name", "@string/app_name_debug")
+            // keep release package id so debug builds can upgrade in place
+            // over the signed release install (same applicationId)
+            resValue("string", "trime_app_name", "@string/app_name_release")
         }
         all {
             // remove META-INF/version-control-info.textproto
