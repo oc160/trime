@@ -201,6 +201,11 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
                 ThemeManager.init(resources.configuration)
                 ThemeManager.addOnChangedListener(onThemeChangeListener)
                 ColorManager.addOnChangedListener(onColorChangeListener)
+                // Theme init attaches the scope without firing listeners, so a view
+                // deferred by onCreateInputView has to be built here.
+                ContextCompat.getMainExecutor(this@TrimeInputMethodService).execute {
+                    ensureInputView(startInput = true)
+                }
             }
         }
         InputFeedbackManager.init(this)
@@ -329,6 +334,26 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
         replaceInputView(scope)
         replaceCandidateView(scope)
         inputView?.updateEnterKeyLabel(currentInputEditorInfo)
+    }
+
+    /**
+     * [onCreateInputView] returns without a view when the theme is not loaded yet, and
+     * nothing re-creates it afterwards: the window stays empty (black screen) until
+     * the IME is switched away and back. Retry from the two moments it can succeed:
+     * once the theme is ready, and on any later input view start.
+     */
+    private fun ensureInputView(startInput: Boolean = false) {
+        if (inputView != null) return
+        val scope = themeScope ?: return
+        val win = window.window ?: return
+        Timber.w("Input view missing while theme is ready; recreating")
+        navBarManager.evaluate(win, inputDeviceManager.useVirtualKeyboard, scope.colors)
+        replaceInputView(scope)
+        replaceCandidateView(scope)
+        inputView?.updateEnterKeyLabel(currentInputEditorInfo)
+        if (startInput) {
+            currentInputEditorInfo?.let { inputView?.startInput(it, false) }
+        }
     }
 
     override fun onDestroy() {
@@ -581,6 +606,7 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
         restarting: Boolean,
     ) {
         Timber.d("onStartInputView: restarting=$restarting")
+        ensureInputView()
         InputFeedbackManager.startInput()
         postRimeJob {
             updateRimeOption(this)
