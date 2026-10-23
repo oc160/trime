@@ -328,6 +328,11 @@ class KeyboardWindow(di: DI) :
             showIdlePunctuation()
             return
         }
+        // 拼音栏只服务中文九键方案；其他方案（如英文九键）不显示
+        if (rime.run { statusCached.schemaId } != "t9") {
+            pinyinBar.update(emptyList())
+            return
+        }
         stripIsPunctuation = false
         // 数字驱动的候选拼音：按当前原始输入枚举所有可能音节（含 zh/x 等前缀）
         rime.launchOnReady {
